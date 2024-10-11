@@ -5,7 +5,7 @@
 """
 
 from flask import Flask, jsonify, request
-from products import fetch_products
+from Catalog_Service.db import fetch_products
 
 app = Flask(__name__)
 
