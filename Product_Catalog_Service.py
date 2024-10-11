@@ -4,25 +4,10 @@
     Tilbyder funktionalitet til at søge, filtrere og kategorisere produkter.
 """
 
-from flask import Flask, jsonify, request, make_response
-import requests
-import sqlite3
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
+from flask import Flask, jsonify, request
+from products import fetch_products
 
 app = Flask(__name__)
-
-with sqlite3.connect('db.db') as conn:
-    cur = conn.cursor()
-    cur.execute
-
-db_path = os.getenv('DB_PATH')
-
-def fetch_products():
-    response = requests.get(db_path)
-    return response.json()
 
 @app.route('/products', methods=['GET'])
 def read_all():
@@ -32,11 +17,27 @@ def read_all():
 
 @app.route('/products/<int:id>', methods=['GET'])
 def get_product(id):
-    product = next((p for p in fetch_products() if p['id'] == id), None)
-    if product:
-        return jsonify(product)
-    else:
-        return make_response(jsonify({"error": "Product not found"}), 400)
+    products = fetch_products()
+    
+    return jsonify([product for product in products if product['id'] == id])
+
+
+@app.route('/products/search', methods=['GET'])
+def search_products():
+    query = request.args.get('title', '').lower()
+    products = fetch_products()
+    
+    filtered_products = [product for product in products if query in product['title'].lower()]
+    return jsonify(filtered_products)
+
+
+@app.route('/products/category/<category_name>', methods=['GET'])
+def get_products_by_category(category_name):
+    products = fetch_products()
+    
+    filtered_products = [product for product in products if product['category'].lower() == category_name.lower()]
+    return jsonify(filtered_products)
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5003)
